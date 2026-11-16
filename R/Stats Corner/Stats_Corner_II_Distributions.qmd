@@ -1,0 +1,218 @@
+---
+title: "Alison's Stats Corner 2 - Intro to Distributions"
+format: html
+editor: visual
+---
+
+## Disclaimer
+
+This tutorial contains no complicated formulas. It is a visual introduction into different statistical distributions. I will however be showing many many graphs :)
+
+## What is a distribution?
+
+First, let's get some data...
+
+```{r, message = F}
+ames_housing = readr::read_csv(
+  "R/Stats Corner/AmesHousing.csv"
+)
+```
+
+#### What's the first thing you should do when you have some data.... plot it!
+
+```{r, message = FALSE}
+mean_saleprice = mean(ames_housing$SalePrice)
+median_saleprice = median(ames_housing$SalePrice)
+
+ggplot2::ggplot(
+  data = ames_housing,
+  mapping = ggplot2::aes(
+    x = SalePrice
+  )
+) +
+  ggplot2::geom_histogram() + # Let the function choose the bin width 
+  ggplot2::geom_vline(
+    xintercept = mean_saleprice, col = "red", lwd = 2
+  ) +
+  ggplot2::geom_vline(
+    xintercept = median_saleprice, col = "blue", lwd = 2
+  )
+```
+
+Let's get some more data...
+
+```{r, message = F}
+students = readr::read_csv(
+  "R/Stats Corner/StudentsPerformance.csv"
+)
+```
+
+```{r, message = F}
+mean_math = mean(students$`math score`)
+median_math = median(students$`math score`)
+
+ggplot2::ggplot(
+  data = students,
+  mapping = ggplot2::aes(
+    x = `math score`
+  )
+) +
+  ggplot2::geom_histogram() + # Let the function choose the bin width 
+  ggplot2::geom_vline(
+    xintercept = mean_math, col = "red", lwd = 2
+  ) +
+  ggplot2::geom_vline(
+    xintercept = median_math, col = "blue", lwd = 2
+  )
+```
+
+**So a distribution is simply a way of describing how values are spread or clustered.**
+
+## Types of Parametric Distributions
+
+Wait a minute... what's the difference between parametric and non-parametric again?
+
+**Parametric distributions** essentially means formula based whereas **non-parametric distributions** means data based.
+
+### Normal Distribution
+
+-   Symmetrical
+
+-   "Bell shaped"
+
+-   Mean = Median
+
+#### Example - Human Height (cm)
+
+```{r, warning = FALSE}
+# Change these to change the shape of the normal distribution
+mean = 160
+sd = 5
+
+norm_dist <- data.frame(
+  x = seq(mean - sd*5, mean + sd*5, length = 1000)
+) |> 
+  dplyr::mutate(
+    y = 1000*dnorm(x, mean = mean, sd = sd)
+  ) |> 
+  dplyr::mutate(
+    sample = rnorm(1000, mean = mean, sd = sd)
+  )
+
+ggplot2::ggplot(norm_dist, ggplot2::aes(x = x, y = y)) +
+  ggplot2::geom_histogram(binwidth= 1, ggplot2::aes(x = sample), inherit.aes = FALSE, fill = "gray60") +
+  ggplot2::geom_line(lwd = 2)
+
+```
+
+### Exponential Distribution
+
+-   Typically left skewed
+
+-   Mean \> Median
+
+#### Example - Time between earthquakes
+
+```{r, warning = FALSE}
+# Change this to change the shape of the exponential distribution
+lambda <- 1 # equivalent to 1 earthquake per year
+
+exp_dist <- data.frame(
+  x = seq(0, 8, length = 1000)
+) |> 
+  dplyr::mutate(
+    y = 0.1*1000*dexp(x, rate = lambda)
+  ) |> 
+  dplyr::mutate(
+    sample = rexp(1000, rate = lambda)
+  )
+
+mean_exp = mean(exp_dist$sample)
+median_exp = median(exp_dist$sample)
+
+ggplot2::ggplot(exp_dist, ggplot2::aes(x = x, y = y)) +
+  ggplot2::geom_histogram(binwidth= 0.1, ggplot2::aes(x = sample), inherit.aes = FALSE, fill = "gray60") +
+  ggplot2::geom_line(lwd = 2) + 
+  ggplot2::geom_vline(
+    xintercept = mean_exp, col = "red", lwd = 2
+  ) +
+  ggplot2::geom_vline(
+    xintercept = median_exp, col = "blue", lwd = 2
+  )
+```
+
+### Uniform Distribution
+
+-   Represents complete randomness i.e. equal probability
+
+-   Bit boring but can be incredibly useful
+
+#### Example - Waiting for a bus (we all know this can be completely random!)
+
+```{r, warning = FALSE}
+# Change this to change the shape of the uniform
+lower_val = 0
+upper_val = 60
+
+unif_dist <- data.frame(
+  x = seq(0, 60, length = 10000)
+) |> 
+  dplyr::mutate(
+    y = 1*10000*dunif(x, min = lower_val, max = upper_val)
+  ) |> 
+  dplyr::mutate(
+    sample = runif(10000, min = lower_val, max = upper_val)
+  )
+
+ggplot2::ggplot(unif_dist, ggplot2::aes(x = x, y = y)) +
+  ggplot2::geom_histogram(binwidth = 1, ggplot2::aes(x = sample), inherit.aes = FALSE, fill = "gray60") +
+  ggplot2::geom_line(lwd = 2)
+```
+
+### Other notable mentions
+
+-   Binomial distribution
+
+-   Poisson distribution
+
+-   Chi-squared distribution
+
+-   Log-normal distribution
+
+## This is all well and good, but why?!
+
+With statistics the answer to any "why" is always the same:
+
+-   Predictions and decision making
+
+If we can fit distributions to our data, this allows us to:
+
+-   Understand the nature of our data
+
+    -   Is the data symmetrical/skewed?
+
+    -   Are there any extreme values?
+
+    -   Is the data purely random?
+
+    -   Unlocks the potential for further investigations.
+
+-   Make predictions
+
+    -   We know our sample of human heights follows a normal distribution with mean = 160cm and sd = 5cm. We can then make a best guess for any new human's height before we've seen them.
+
+-   Perform inference. We can answer questions like:
+
+    -   What's the probability that our new human will be taller than 180cm?
+
+    -   Does the human heights in sample 1 differ significantly from the human heights in sample 2? Perhaps we have those in sample 2 a growth drug - this would in theory test the drugs effectiveness.
+
+-   Simulating real world data
+
+    -   Can generate test data
+
+    -   Allows the modelling of more complex scenarios
+
+-   **NO DISTRIBUTIONS, NO AI!**
+
+    -   Distributions are used within LLMs, so whenever you ask copilot a question, in the background many many different distributions are applied to help formulate its response!
